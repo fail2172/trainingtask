@@ -1,0 +1,33 @@
+buildscript {
+    dependencies {
+        classpath 'org.postgresql:postgresql:42.7.4'
+        classpath 'org.flywaydb:flyway-database-postgresql:10.4.1'
+    }
+}
+
+plugins {
+    id 'java'
+    id 'war'
+    id "org.flywaydb.flyway" version "10.1.0"
+}
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.0-rc1'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.0-rc1'
+    implementation 'org.postgresql:postgresql:42.7.4'
+    implementation 'org.hibernate:hibernate-core:5.6.15.Final'
+    compileOnly 'jakarta.servlet:jakarta.servlet-api:6.1.0'
+}
+
+flyway {
+    url = 'jdbc:postgresql://localhost:5432/postgres'
+    user = 'sova'
+    password = '12345'
+}
