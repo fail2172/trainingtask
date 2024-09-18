@@ -1,13 +1,14 @@
 package org.example.service;
 
-import org.example.dao.TaskDao;
-import org.example.dao.TaskDaoImpl;
+import org.example.dao.*;
 import org.example.model.Task;
 
 import java.util.List;
 import java.util.Optional;
 
 public class TaskServiceImpl implements TaskService {
+    private final static TaskDao taskDao = TaskDaoImpl.getInstance();
+    private static volatile TaskService INSTANCE;
 
     private TaskServiceImpl() {
     }
@@ -23,30 +24,27 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public Optional<Task> create(Task task) {
-        return dao.create(task);
+    public Task create(Task task) {
+        return taskDao.create(task);
     }
 
     @Override
     public Optional<Task> read(Integer id) {
-        return dao.read(id);
+        return taskDao.read(id);
     }
 
     @Override
     public boolean update(Task task) {
-        return dao.update(task);
+        return taskDao.update(task);
     }
 
     @Override
     public boolean delete(Integer id) {
-        return dao.delete(id);
+        return taskDao.delete(id);
     }
 
     @Override
     public List<Task> findAll() {
-        return dao.findAll();
+        return taskDao.findAll();
     }
-
-    private final static TaskDao dao = TaskDaoImpl.getInstance();
-    private static volatile TaskService INSTANCE;
 }

@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TaskDao {
-    Optional<Task> create(Task task);
+    Task create(Task task);
 
     Optional<Task> read(Integer id);
 
@@ -15,4 +15,8 @@ public interface TaskDao {
     boolean delete(Integer id);
 
     List<Task> findAll();
+
+    List<Task> findByEmployee(Integer employeeId);
+
+    List<Task> findByProject(Integer projectId);
 }

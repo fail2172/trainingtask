@@ -1,77 +1,78 @@
 package org.example.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.model.Employee;
+import org.example.model.Project;
 import org.example.model.Task;
-import org.example.service.TaskService;
-import org.example.service.TaskServiceImpl;
+import org.example.model.dto.TaskDto;
+import org.example.model.dto.TaskMapper;
+import org.example.service.*;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
-import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @WebServlet("/task")
 public class TaskServlet extends HttpServlet {
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String id = req.getParameter("id");
+    private final static EmployeeService employeeService = EmployeeServiceImpl.getInstance();
+    private final static ProjectService projectService = ProjectServiceImpl.getInstance();
+    private final static TaskService taskService = TaskServiceImpl.getInstance();
+    private final static ObjectMapper objectMapper = new ObjectMapper();
+
+    static {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.findAndRegisterModules();
         objectMapper.setDateFormat(df);
-        String json;
-        if (id == null) {
-            List<Task> projects = service.findAll();
-            json = objectMapper.writeValueAsString(projects);
-        } else {
-            Optional<Task> task = service.read(Integer.valueOf(id));
-            if (task.isPresent())
-                json = objectMapper.writeValueAsString(task.get());
-            else {
-                resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-                return;
-            }
-        }
+    }
 
-        PrintWriter out = resp.getWriter();
-        resp.setContentType("application/json");
-        resp.setCharacterEncoding("UTF-8");
-        out.print(json);
-        out.flush();
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        try {
+            String json = req.getParameter("id") == null
+                    ? objectMapper.writeValueAsString(taskService.findAll())
+                    : objectMapper.writeValueAsString(taskService.read(Integer.valueOf(req.getParameter("id")))
+                    .orElseThrow());
+            PrintWriter out = resp.getWriter();
+            resp.setContentType("application/json");
+            resp.setCharacterEncoding("UTF-8");
+            out.print(json);
+            out.flush();
+        } catch (NoSuchElementException e) {
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        }
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.findAndRegisterModules();
-        objectMapper.setDateFormat(df);
-        String body = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+        try {
+            String body = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+            Task task = taskFromJson(body);
+            String json = objectMapper.writeValueAsString(TaskMapper.toDto(taskService.create(task)));
 
-        Task task = objectMapper.readValue(body, Task.class);
-        Optional<Task> taskInBase = service.create(task);
-        String json = taskInBase.isPresent() ? objectMapper.writeValueAsString(taskInBase.get()) : "{}";
-
-        PrintWriter out = resp.getWriter();
-        resp.setContentType("application/json");
-        resp.setCharacterEncoding("UTF-8");
-        out.print(json);
-        out.flush();
+            PrintWriter out = resp.getWriter();
+            resp.setContentType("application/json");
+            resp.setCharacterEncoding("UTF-8");
+            out.print(json);
+            out.flush();
+        } catch (NoSuchElementException e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
     }
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
         String body = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+        Task task = taskFromJson(body);
 
-        Task task = objectMapper.readValue(body, Task.class);
-        if (service.update(task))
+        if (taskService.update(task))
             resp.setStatus(HttpServletResponse.SC_OK);
         else
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -79,17 +80,23 @@ public class TaskServlet extends HttpServlet {
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String id = req.getParameter("id");
-        if (id == null) {
+        if (req.getParameter("id") == null) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
-        if (service.delete(Integer.valueOf(id)))
-            resp.setStatus(HttpServletResponse.SC_OK);
-        else
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+        if (!taskService.delete(Integer.valueOf(req.getParameter("id"))))
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
     }
 
-    private final TaskService service = TaskServiceImpl.getInstance();
+    private Task taskFromJson(String json) throws JsonProcessingException {
+        TaskDto taskDto = objectMapper.readValue(json, TaskDto.class);
+        Task task = TaskMapper.toModel(taskDto);
+        Optional<Employee> employee = Optional.of(employeeService.read(taskDto.getEmployeeId()).orElseThrow());
+        Optional<Project> project = Optional.of(projectService.read(taskDto.getProjectId()).orElseThrow());
+        employee.ifPresent(task::setEmployee);
+        project.ifPresent(task::setProject);
+
+        return task;
+    }
 }

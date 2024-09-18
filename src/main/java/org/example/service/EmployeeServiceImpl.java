@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class EmployeeServiceImpl implements EmployeeService {
+    private final static EmployeeDao dao = EmployeeDaoImpl.getInstance();
+    private static volatile EmployeeService INSTANCE;
 
     private EmployeeServiceImpl() {
     }
@@ -24,7 +26,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Optional<Employee> create(Employee employee) {
+    public Employee create(Employee employee) {
         return dao.create(employee);
     }
 
@@ -47,7 +49,4 @@ public class EmployeeServiceImpl implements EmployeeService {
     public List<Employee> findAll() {
         return dao.findAll();
     }
-
-    private final EmployeeDao dao = EmployeeDaoImpl.getInstance();
-    private static volatile EmployeeService INSTANCE;
 }

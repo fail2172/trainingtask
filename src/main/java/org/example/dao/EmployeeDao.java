@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface EmployeeDao {
-    Optional<Employee> create(Employee employee);
+    Employee create(Employee employee);
 
     Optional<Employee> read(Integer id);
 

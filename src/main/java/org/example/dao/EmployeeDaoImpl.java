@@ -2,12 +2,27 @@ package org.example.dao;
 
 import org.example.model.Employee;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class EmployeeDaoImpl implements EmployeeDao {
+    private static volatile EmployeeDao INSTANCE;
+    private final static String INSERT = "INSERT INTO employee (name, surname, patronymic, position) VALUES (?, ?, ?, ?) RETURNING id";
+    private final static String READ = "SELECT * FROM employee WHERE id = ?";
+    private final static String UPDATE = "UPDATE employee SET name = ?, surname = ?, patronymic = ?, position = ? WHERE id = ?";
+    private final static String DELETE = "DELETE FROM employee WHERE id = ?";
+    private final static String READ_ALL = "SELECT * FROM employee ORDER BY id DESC";
+    private final static String ID_FIELD = "id";
+    private final static String NAME_FIELD = "name";
+    private final static String SURNAME_FIELD = "surname";
+    private final static String PATRONYMIC_FIELD = "patronymic";
+    private final static String POSITION_FIELD = "position";
+    ConnectionFactory connectionFactory = ConnectionFactory.getInstance();
 
     private EmployeeDaoImpl() {
     }
@@ -23,7 +38,7 @@ public class EmployeeDaoImpl implements EmployeeDao {
     }
 
     @Override
-    public Optional<Employee> create(Employee employee) {
+    public Employee create(Employee employee) {
         try (Connection connection = connectionFactory.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(INSERT);
             statement.setString(1, employee.getName());
@@ -31,14 +46,17 @@ public class EmployeeDaoImpl implements EmployeeDao {
             statement.setString(3, employee.getPatronymic());
             statement.setString(4, employee.getPosition());
             ResultSet result = statement.executeQuery();
-            return result.next()
-                    ? Optional.of(new Employee(
+
+            if (!result.next()) {
+                throw new RuntimeException("Employee could not be created");
+            }
+
+            return new Employee(
                     result.getInt(ID_FIELD),
                     employee.getName(),
                     employee.getSurname(),
                     employee.getPatronymic(),
-                    employee.getPosition()))
-                    : Optional.empty();
+                    employee.getPosition());
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -46,18 +64,16 @@ public class EmployeeDaoImpl implements EmployeeDao {
 
     @Override
     public Optional<Employee> read(Integer id) {
+        if (id == null) {
+            return Optional.empty();
+        }
+
         try (Connection connection = connectionFactory.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(READ);
             statement.setInt(1, id);
             ResultSet result = statement.executeQuery();
-            return result.next()
-                    ? Optional.of(new Employee(
-                    result.getInt(ID_FIELD),
-                    result.getString(NAME_FIELD),
-                    result.getString(SURNAME_FIELD),
-                    result.getString(PATRONYMIC_FIELD),
-                    result.getString(POSITION_FIELD)))
-                    : Optional.empty();
+
+            return extractEmployeeFromResultSet(result);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -81,10 +97,15 @@ public class EmployeeDaoImpl implements EmployeeDao {
 
     @Override
     public boolean delete(Integer id) {
+        if (id == null) {
+            return false;
+        }
+
         try (Connection connection = connectionFactory.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(DELETE);
             statement.setInt(1, id);
-            return statement.executeUpdate() == 1;
+
+            return statement.executeUpdate() != 0;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -95,30 +116,33 @@ public class EmployeeDaoImpl implements EmployeeDao {
         try (Connection connection = connectionFactory.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(READ_ALL);
             ResultSet result = statement.executeQuery();
-            List<Employee> projects = new ArrayList<>();
-            while (result.next()) {
-                projects.add(new Employee(result.getInt(ID_FIELD),
-                        result.getString(NAME_FIELD),
-                        result.getString(SURNAME_FIELD),
-                        result.getString(PATRONYMIC_FIELD),
-                        result.getString(POSITION_FIELD)));
+            List<Employee> employees = new ArrayList<>();
+
+            while (true) {
+                Optional<Employee> employee = extractEmployeeFromResultSet(result);
+                if (employee.isEmpty())
+                    break;
+                employees.add(employee.get());
             }
-            return projects;
+
+            return employees;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
-    ConnectionFactory connectionFactory = ConnectionFactory.getInstance();
-    private static volatile EmployeeDao INSTANCE;
-    private final static String INSERT = "INSERT INTO employee (name, surname, patronymic, position) VALUES (?, ?, ?, ?) RETURNING id";
-    private final static String READ = "SELECT * FROM employee WHERE id = ?";
-    private final static String UPDATE = "UPDATE employee SET name = ?, surname = ?, patronymic = ?, position = ? WHERE id = ?";
-    private final static String DELETE = "DELETE FROM employee WHERE id = ?";
-    private final static String READ_ALL = "SELECT * FROM employee ORDER BY id DESC";
-    private final static String ID_FIELD = "id";
-    private final static String NAME_FIELD = "name";
-    private final static String SURNAME_FIELD = "surname";
-    private final static String PATRONYMIC_FIELD = "patronymic";
-    private final static String POSITION_FIELD = "position";
+    private Optional<Employee> extractEmployeeFromResultSet(ResultSet set) throws SQLException {
+        if (set.next()) {
+            Employee employee = new Employee(
+                    set.getInt(ID_FIELD),
+                    set.getString(NAME_FIELD),
+                    set.getString(SURNAME_FIELD),
+                    set.getString(PATRONYMIC_FIELD),
+                    set.getString(POSITION_FIELD));
+
+            return Optional.of(employee);
+        }
+
+        return Optional.empty();
+    }
 }

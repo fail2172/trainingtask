@@ -1,14 +1,16 @@
 package org.example.service;
 
 import org.example.dao.ProjectDao;
+import org.example.dao.ProjectDaoImpl;
 import org.example.dao.TaskDaoImpl;
-import org.example.dao.hibernate.ProjectDaoImpl;
 import org.example.model.Project;
 
 import java.util.List;
 import java.util.Optional;
 
 public class ProjectServiceImpl implements ProjectService {
+    private final static ProjectDao dao = ProjectDaoImpl.getInstance();
+    private static volatile ProjectService INSTANCE;
 
     private ProjectServiceImpl() {
     }
@@ -24,7 +26,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public Optional<Project> create(Project project) {
+    public Project create(Project project) {
         return dao.create(project);
     }
 
@@ -47,7 +49,4 @@ public class ProjectServiceImpl implements ProjectService {
     public List<Project> findAll() {
         return dao.findAll();
     }
-
-    private final ProjectDao dao = ProjectDaoImpl.getInstance();
-    private static volatile ProjectService INSTANCE;
 }

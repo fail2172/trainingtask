@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProjectDao {
-    Optional<Project> create(Project project);
+    Project create(Project project);
 
     Optional<Project> read(Integer id);
 
