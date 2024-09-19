@@ -36,29 +36,25 @@ public class ProjectDaoImpl implements ProjectDao {
     }
 
     @Override
-    public Project create(Project project) {
+    public Project create(Project project) throws SQLException {
         try (Connection connection = connectionService.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(INSERT);
             statement.setString(1, project.getName());
             statement.setString(2, project.getDescription());
             ResultSet result = statement.executeQuery();
 
-            if (!result.next()) {
+            if (!result.next())
                 throw new RuntimeException("Project could not be created");
-            }
 
             return new Project(
                     result.getInt(ID_FIELD),
                     project.getName(),
                     project.getDescription());
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public Optional<Project> read(Integer id) {
+    public Optional<Project> read(Integer id) throws SQLException {
         if (id == null) {
             return Optional.empty();
         }
@@ -68,14 +64,14 @@ public class ProjectDaoImpl implements ProjectDao {
             statement.setInt(1, id);
             ResultSet result = statement.executeQuery();
 
-            return extractProjectFromResultSet(result);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+            return result.next()
+                    ? Optional.of(extractProjectFromResultSet(result))
+                    : Optional.empty();
         }
     }
 
     @Override
-    public boolean update(Project project) {
+    public boolean update(Project project) throws SQLException {
         try (Connection connection = connectionService.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(UPDATE);
             statement.setString(1, project.getName());
@@ -83,13 +79,11 @@ public class ProjectDaoImpl implements ProjectDao {
             statement.setInt(3, project.getId());
 
             return statement.executeUpdate() != 0;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public boolean delete(Integer id) {
+    public boolean delete(Integer id) throws SQLException {
         if (id == null) {
             return false;
         }
@@ -99,41 +93,27 @@ public class ProjectDaoImpl implements ProjectDao {
             statement.setInt(1, id);
 
             return statement.executeUpdate() != 0;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public List<Project> findAll() {
+    public List<Project> findAll() throws SQLException {
         try (Connection connection = connectionService.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(READ_ALL);
             ResultSet result = statement.executeQuery();
             List<Project> projects = new ArrayList<>();
 
-            while (true) {
-                Optional<Project> project = extractProjectFromResultSet(result);
-                if (project.isEmpty())
-                    break;
-                projects.add(project.get());
-            }
+            while (result.next())
+                projects.add(extractProjectFromResultSet(result));
 
             return projects;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
-    private Optional<Project> extractProjectFromResultSet(ResultSet set) throws SQLException {
-        if (set.next()) {
-            Project project = new Project(
+    private Project extractProjectFromResultSet(ResultSet set) throws SQLException {
+        return new Project(
                     set.getInt(ID_FIELD),
                     set.getString(NAME_FIELD),
                     set.getString(DESCRIPTION_FIELD));
-
-            return Optional.of(project);
-        }
-
-        return Optional.empty();
     }
 }

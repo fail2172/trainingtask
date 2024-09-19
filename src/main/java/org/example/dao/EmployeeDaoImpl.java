@@ -38,7 +38,7 @@ public class EmployeeDaoImpl implements EmployeeDao {
     }
 
     @Override
-    public Employee create(Employee employee) {
+    public Employee create(Employee employee) throws SQLException {
         try (Connection connection = connectionFactory.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(INSERT);
             statement.setString(1, employee.getName());
@@ -47,9 +47,8 @@ public class EmployeeDaoImpl implements EmployeeDao {
             statement.setString(4, employee.getPosition());
             ResultSet result = statement.executeQuery();
 
-            if (!result.next()) {
+            if (!result.next())
                 throw new RuntimeException("Employee could not be created");
-            }
 
             return new Employee(
                     result.getInt(ID_FIELD),
@@ -57,13 +56,11 @@ public class EmployeeDaoImpl implements EmployeeDao {
                     employee.getSurname(),
                     employee.getPatronymic(),
                     employee.getPosition());
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public Optional<Employee> read(Integer id) {
+    public Optional<Employee> read(Integer id) throws SQLException {
         if (id == null) {
             return Optional.empty();
         }
@@ -73,14 +70,14 @@ public class EmployeeDaoImpl implements EmployeeDao {
             statement.setInt(1, id);
             ResultSet result = statement.executeQuery();
 
-            return extractEmployeeFromResultSet(result);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+            return result.next()
+                    ? Optional.of(extractEmployeeFromResultSet(result))
+                    : Optional.empty();
         }
     }
 
     @Override
-    public boolean update(Employee employee) {
+    public boolean update(Employee employee) throws SQLException {
         try (Connection connection = connectionFactory.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(UPDATE);
             statement.setString(1, employee.getName());
@@ -90,13 +87,11 @@ public class EmployeeDaoImpl implements EmployeeDao {
             statement.setInt(5, employee.getId());
 
             return statement.executeUpdate() != 0;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public boolean delete(Integer id) {
+    public boolean delete(Integer id) throws SQLException {
         if (id == null) {
             return false;
         }
@@ -106,43 +101,29 @@ public class EmployeeDaoImpl implements EmployeeDao {
             statement.setInt(1, id);
 
             return statement.executeUpdate() != 0;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public List<Employee> findAll() {
+    public List<Employee> findAll() throws SQLException {
         try (Connection connection = connectionFactory.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(READ_ALL);
             ResultSet result = statement.executeQuery();
             List<Employee> employees = new ArrayList<>();
 
-            while (true) {
-                Optional<Employee> employee = extractEmployeeFromResultSet(result);
-                if (employee.isEmpty())
-                    break;
-                employees.add(employee.get());
-            }
+            while (result.next())
+                employees.add(extractEmployeeFromResultSet(result));
 
             return employees;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
-    private Optional<Employee> extractEmployeeFromResultSet(ResultSet set) throws SQLException {
-        if (set.next()) {
-            Employee employee = new Employee(
-                    set.getInt(ID_FIELD),
-                    set.getString(NAME_FIELD),
-                    set.getString(SURNAME_FIELD),
-                    set.getString(PATRONYMIC_FIELD),
-                    set.getString(POSITION_FIELD));
-
-            return Optional.of(employee);
-        }
-
-        return Optional.empty();
+    private Employee extractEmployeeFromResultSet(ResultSet set) throws SQLException {
+        return new Employee(
+                set.getInt(ID_FIELD),
+                set.getString(NAME_FIELD),
+                set.getString(SURNAME_FIELD),
+                set.getString(PATRONYMIC_FIELD),
+                set.getString(POSITION_FIELD));
     }
 }

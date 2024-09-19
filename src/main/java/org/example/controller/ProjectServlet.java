@@ -26,11 +26,7 @@ public class ProjectServlet extends HttpServlet {
                     ? objectMapper.writeValueAsString(service.findAll())
                     : objectMapper.writeValueAsString(service.read(Integer.valueOf(req.getParameter("id")))
                     .orElseThrow());
-            PrintWriter out = resp.getWriter();
-            resp.setContentType("application/json");
-            resp.setCharacterEncoding("UTF-8");
-            out.print(json);
-            out.flush();
+            writeJsonToResponse(resp, json);
         } catch (NoSuchElementException e) {
             resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
         }
@@ -41,11 +37,7 @@ public class ProjectServlet extends HttpServlet {
         String body = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
         String json = objectMapper.writeValueAsString(service.create(objectMapper.readValue(body, Project.class)));
 
-        PrintWriter out = resp.getWriter();
-        resp.setContentType("application/json");
-        resp.setCharacterEncoding("UTF-8");
-        out.print(json);
-        out.flush();
+        writeJsonToResponse(resp, json);
     }
 
     @Override
@@ -64,5 +56,13 @@ public class ProjectServlet extends HttpServlet {
 
         if (!service.delete(Integer.valueOf(req.getParameter("id"))))
             resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+    }
+
+    private void writeJsonToResponse(HttpServletResponse resp, String json) throws IOException {
+        PrintWriter out = resp.getWriter();
+        resp.setContentType("application/json");
+        resp.setCharacterEncoding("UTF-8");
+        out.print(json);
+        out.flush();
     }
 }

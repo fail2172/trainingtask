@@ -1,12 +1,17 @@
 package org.example.service;
 
-import org.example.dao.*;
+import org.example.dao.TaskDao;
+import org.example.dao.TaskDaoImpl;
 import org.example.model.Task;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 public class TaskServiceImpl implements TaskService {
+    private final static Logger LOGGER = Logger.getLogger(TaskServiceImpl.class.getName());
     private final static TaskDao taskDao = TaskDaoImpl.getInstance();
     private static volatile TaskService INSTANCE;
 
@@ -15,7 +20,7 @@ public class TaskServiceImpl implements TaskService {
 
     public static TaskService getInstance() {
         if (INSTANCE == null) {
-            synchronized (TaskDaoImpl.class) {
+            synchronized (TaskServiceImpl.class) {
                 if (INSTANCE == null)
                     return INSTANCE = new TaskServiceImpl();
             }
@@ -25,26 +30,51 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public Task create(Task task) {
-        return taskDao.create(task);
+        try {
+            return taskDao.create(task);
+        } catch (SQLException e) {
+            LOGGER.severe(e.getMessage());
+            return new Task();
+        }
     }
 
     @Override
     public Optional<Task> read(Integer id) {
-        return taskDao.read(id);
+        try {
+            return taskDao.read(id);
+        } catch (SQLException e) {
+            LOGGER.severe(e.getMessage());
+            return Optional.empty();
+        }
     }
 
     @Override
     public boolean update(Task task) {
-        return taskDao.update(task);
+        try {
+            return taskDao.update(task);
+        } catch (SQLException e) {
+            LOGGER.severe(e.getMessage());
+            return false;
+        }
     }
 
     @Override
     public boolean delete(Integer id) {
-        return taskDao.delete(id);
+        try {
+            return taskDao.delete(id);
+        } catch (SQLException e) {
+            LOGGER.severe(e.getMessage());
+            return false;
+        }
     }
 
     @Override
     public List<Task> findAll() {
-        return taskDao.findAll();
+        try {
+            return taskDao.findAll();
+        } catch (SQLException e) {
+            LOGGER.severe(e.getMessage());
+            return new ArrayList<>();
+        }
     }
 }

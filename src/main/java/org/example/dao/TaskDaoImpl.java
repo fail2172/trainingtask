@@ -45,7 +45,7 @@ public class TaskDaoImpl implements TaskDao {
     }
 
     @Override
-    public Task create(Task task) {
+    public Task create(Task task) throws SQLException {
         try (Connection connection = connectionFactory.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(INSERT);
             statement.setString(1, task.getName());
@@ -73,13 +73,11 @@ public class TaskDaoImpl implements TaskDao {
             taskInBase.setProject(task.getProject());
 
             return taskInBase;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public Optional<Task> read(Integer id) {
+    public Optional<Task> read(Integer id) throws SQLException {
         if (id == null) {
             return Optional.empty();
         }
@@ -89,14 +87,14 @@ public class TaskDaoImpl implements TaskDao {
             statement.setInt(1, id);
             ResultSet result = statement.executeQuery();
 
-            return extractTaskFromResultSet(result);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+            return result.next()
+                    ? Optional.of(extractTaskFromResultSet(result))
+                    : Optional.empty();
         }
     }
 
     @Override
-    public boolean update(Task task) {
+    public boolean update(Task task) throws SQLException {
         try (Connection connection = connectionFactory.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(UPDATE);
             statement.setString(1, task.getName());
@@ -109,13 +107,11 @@ public class TaskDaoImpl implements TaskDao {
             statement.setInt(8, task.getId());
 
             return statement.executeUpdate() != 0;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public boolean delete(Integer id) {
+    public boolean delete(Integer id) throws SQLException {
         if (id == null) {
             return false;
         }
@@ -125,33 +121,25 @@ public class TaskDaoImpl implements TaskDao {
             statement.setInt(1, id);
 
             return statement.executeUpdate() != 0;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public List<Task> findAll() {
+    public List<Task> findAll() throws SQLException {
         try (Connection connection = connectionFactory.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(READ_ALL);
             ResultSet result = statement.executeQuery();
             List<Task> tasks = new ArrayList<>();
 
-            while (true) {
-                Optional<Task> task = extractTaskFromResultSet(result);
-                if (task.isEmpty())
-                    break;
-                tasks.add(task.get());
-            }
+            while (result.next())
+                tasks.add(extractTaskFromResultSet(result));
 
             return tasks;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public List<Task> findByEmployee(Integer employeeId) {
+    public List<Task> findByEmployee(Integer employeeId) throws SQLException {
         if (employeeId == null) {
             return new ArrayList<>();
         }
@@ -162,21 +150,15 @@ public class TaskDaoImpl implements TaskDao {
             ResultSet result = statement.executeQuery();
             List<Task> tasks = new ArrayList<>();
 
-            while (true) {
-                Optional<Task> task = extractTaskFromResultSet(result);
-                if (task.isEmpty())
-                    break;
-                tasks.add(task.get());
-            }
+            while (result.next())
+                tasks.add(extractTaskFromResultSet(result));
 
             return tasks;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public List<Task> findByProject(Integer projectId) {
+    public List<Task> findByProject(Integer projectId) throws SQLException {
         if (projectId == null) {
             return new ArrayList<>();
         }
@@ -187,21 +169,14 @@ public class TaskDaoImpl implements TaskDao {
             ResultSet result = statement.executeQuery();
             List<Task> tasks = new ArrayList<>();
 
-            while (true) {
-                Optional<Task> task = extractTaskFromResultSet(result);
-                if (task.isEmpty())
-                    break;
-                tasks.add(task.get());
-            }
+            while (result.next())
+                tasks.add(extractTaskFromResultSet(result));
 
             return tasks;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
-    private Optional<Task> extractTaskFromResultSet(ResultSet set) throws SQLException {
-        if (set.next()) {
+    private Task extractTaskFromResultSet(ResultSet set) throws SQLException {
             Optional<Employee> employee = employeeDao.read(set.getInt(EMPLOYEE_ID_FIELD));
             Optional<Project> project = projectDao.read(set.getInt(PROJECT_ID_FIELD));
             Task task = new Task(
@@ -214,9 +189,6 @@ public class TaskDaoImpl implements TaskDao {
             employee.ifPresent(task::setEmployee);
             project.ifPresent(task::setProject);
 
-            return Optional.of(task);
-        }
-
-        return Optional.empty();
+            return task;
     }
 }

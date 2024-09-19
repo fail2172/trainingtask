@@ -40,11 +40,7 @@ public class TaskServlet extends HttpServlet {
                     ? objectMapper.writeValueAsString(taskService.findAll())
                     : objectMapper.writeValueAsString(taskService.read(Integer.valueOf(req.getParameter("id")))
                     .orElseThrow());
-            PrintWriter out = resp.getWriter();
-            resp.setContentType("application/json");
-            resp.setCharacterEncoding("UTF-8");
-            out.print(json);
-            out.flush();
+            writeJsonToResponse(resp, json);
         } catch (NoSuchElementException e) {
             resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
         }
@@ -57,11 +53,7 @@ public class TaskServlet extends HttpServlet {
             Task task = taskFromJson(body);
             String json = objectMapper.writeValueAsString(TaskMapper.toDto(taskService.create(task)));
 
-            PrintWriter out = resp.getWriter();
-            resp.setContentType("application/json");
-            resp.setCharacterEncoding("UTF-8");
-            out.print(json);
-            out.flush();
+            writeJsonToResponse(resp, json);
         } catch (NoSuchElementException e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
@@ -72,16 +64,14 @@ public class TaskServlet extends HttpServlet {
         String body = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
         Task task = taskFromJson(body);
 
-        if (taskService.update(task))
-            resp.setStatus(HttpServletResponse.SC_OK);
-        else
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+        if (!taskService.update(task))
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
     }
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         if (req.getParameter("id") == null) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
@@ -98,5 +88,13 @@ public class TaskServlet extends HttpServlet {
         project.ifPresent(task::setProject);
 
         return task;
+    }
+
+    private void writeJsonToResponse(HttpServletResponse resp, String json) throws IOException {
+        PrintWriter out = resp.getWriter();
+        resp.setContentType("application/json");
+        resp.setCharacterEncoding("UTF-8");
+        out.print(json);
+        out.flush();
     }
 }
