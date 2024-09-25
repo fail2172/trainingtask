@@ -1,8 +1,10 @@
 package org.example.dao;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Properties;
 
 public class ConnectionFactory {
     private static volatile ConnectionFactory INSTANCE;
@@ -27,9 +29,15 @@ public class ConnectionFactory {
     }
 
     public Connection getConnection() throws SQLException {
-        String jdbcUrl = "jdbc:postgresql://localhost:5432/postgres";
-        String username = "sova";
-        String password = "12345";
-        return DriverManager.getConnection(jdbcUrl, username, password);
+        Properties dbConfig = new Properties();
+        try {
+            dbConfig.load(getClass().getClassLoader().getResourceAsStream("db/config.properties"));
+            return DriverManager.getConnection(
+                    dbConfig.getProperty("url"),
+                    dbConfig.getProperty("username"),
+                    dbConfig.getProperty("password"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

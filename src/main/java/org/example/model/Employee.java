@@ -1,20 +1,20 @@
 package org.example.model;
 
-import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
-@Entity
-@Table(name = "employee")
 public class Employee {
-    public Employee(int id, String name, String surname, String patronymic, String position) {
+    private Integer id;
+    private String name;
+    private String surname;
+    private String patronymic;
+    private String position;
+
+    public Employee(Integer id, String name, String surname, String patronymic, String position) {
         this.id = id;
         this.name = name;
         this.surname = surname;
         this.patronymic = patronymic;
         this.position = position;
-        this.tasks = new ArrayList<>();
     }
 
     public Employee(String name, String surname, String patronymic, String position) {
@@ -23,15 +23,10 @@ public class Employee {
         this.surname = surname;
         this.patronymic = patronymic;
         this.position = position;
-        this.tasks = new ArrayList<>();
     }
 
     public Employee() {
 
-    }
-
-    public boolean addTask(Task task) {
-        return tasks.add(task);
     }
 
     public Integer getId() {
@@ -70,17 +65,13 @@ public class Employee {
         this.position = position;
     }
 
-    public void setTasks(List<Task> tasks) {
-        this.tasks = tasks;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
         Employee employee = (Employee) o;
-        return Objects.equals(id, employee.id) && Objects.equals(name, employee.name) && Objects.equals(surname, employee.surname) && Objects.equals(patronymic, employee.patronymic) && Objects.equals(position, employee.position) && Objects.equals(tasks, employee.tasks);
+        return Objects.equals(id, employee.id) && Objects.equals(name, employee.name) && Objects.equals(surname, employee.surname) && Objects.equals(patronymic, employee.patronymic) && Objects.equals(position, employee.position);
     }
 
     @Override
@@ -90,7 +81,6 @@ public class Employee {
         result = 31 * result + Objects.hashCode(surname);
         result = 31 * result + Objects.hashCode(patronymic);
         result = 31 * result + Objects.hashCode(position);
-        result = 31 * result + Objects.hashCode(tasks);
         return result;
     }
 
@@ -102,21 +92,6 @@ public class Employee {
                 ", surname='" + surname + '\'' +
                 ", patronymic='" + patronymic + '\'' +
                 ", position='" + position + '\'' +
-                ", tasks=" + tasks +
                 '}';
     }
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer id;
-    @Column(name = "name")
-    private String name;
-    @Column(name = "surname")
-    private String surname;
-    @Column(name = "patronymic")
-    private String patronymic;
-    @Column(name = "position")
-    private String position;
-    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Task> tasks;
 }

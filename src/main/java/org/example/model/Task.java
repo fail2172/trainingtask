@@ -1,32 +1,38 @@
 package org.example.model;
 
-import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.Objects;
 
-@Entity
-@Table(name = "task")
 public class Task {
-    public Task(Integer id, String name, TaskStatus status, LocalDate start, LocalDate finish, Integer estimate, Project project, Employee employee) {
+    private Integer id;
+    private String name;
+    private TaskStatus status;
+    private LocalDate start;
+    private LocalDate finish;
+    private Integer estimate;
+    private Employee employee;
+    private Project project;
+
+    public Task(Integer id, String name, TaskStatus status, LocalDate start, LocalDate finish, Integer estimate) {
         this.id = id;
         this.name = name;
         this.status = status;
         this.start = start;
         this.finish = finish;
         this.estimate = estimate;
-        this.project = project;
-        this.employee = employee;
+        this.employee = null;
+        this.project = null;
     }
 
-    public Task(String name, TaskStatus status, LocalDate start, LocalDate finish, Integer estimate, Project project, Employee employee) {
+    public Task(String name, TaskStatus status, LocalDate start, LocalDate finish, Integer estimate) {
         this.id = null;
         this.name = name;
         this.status = status;
         this.start = start;
         this.finish = finish;
         this.estimate = estimate;
-        this.project = project;
-        this.employee = employee;
+        this.employee = null;
+        this.project = null;
     }
 
     public Task() {
@@ -57,6 +63,13 @@ public class Task {
         return estimate;
     }
 
+    public Project getProject() {
+        return project;
+    }
+
+    public Employee getEmployee() {
+        return employee;
+    }
 
     public void setName(String name) {
         this.name = name;
@@ -121,24 +134,4 @@ public class Task {
                 ", employee=" + employee +
                 '}';
     }
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer id;
-    @Column(name = "name")
-    private String name;
-    @Column(name = "status")
-    private TaskStatus status;
-    @Column(name = "start")
-    private LocalDate start;
-    @Column(name = "finish")
-    private LocalDate finish;
-    @Column(name = "estimate")
-    private Integer estimate;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinTable(name = "project_id")
-    private Project project;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinTable(name = "employee_id")
-    private Employee employee;
 }

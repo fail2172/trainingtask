@@ -2,20 +2,25 @@ package org.example.service;
 
 import org.example.dao.EmployeeDao;
 import org.example.dao.EmployeeDaoImpl;
-import org.example.dao.TaskDaoImpl;
 import org.example.model.Employee;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 public class EmployeeServiceImpl implements EmployeeService {
+    private final static Logger LOGGER = Logger.getLogger(EmployeeServiceImpl.class.getName());
+    private final static EmployeeDao dao = EmployeeDaoImpl.getInstance();
+    private static volatile EmployeeService INSTANCE;
 
     private EmployeeServiceImpl() {
     }
 
     public static EmployeeService getInstance() {
         if (INSTANCE == null) {
-            synchronized (TaskDaoImpl.class) {
+            synchronized (EmployeeServiceImpl.class) {
                 if (INSTANCE == null)
                     return INSTANCE = new EmployeeServiceImpl();
             }
@@ -24,30 +29,52 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Optional<Employee> create(Employee employee) {
-        return dao.create(employee);
+    public Employee create(Employee employee) {
+        try {
+            return dao.create(employee);
+        } catch (SQLException e) {
+            LOGGER.severe(e.getMessage());
+            return new Employee();
+        }
     }
 
     @Override
     public Optional<Employee> read(Integer id) {
-        return dao.read(id);
+        try {
+            return dao.read(id);
+        } catch (SQLException e) {
+            LOGGER.severe(e.getMessage());
+            return Optional.empty();
+        }
     }
 
     @Override
     public boolean update(Employee employee) {
-        return dao.update(employee);
+        try {
+            return dao.update(employee);
+        } catch (SQLException e) {
+            LOGGER.severe(e.getMessage());
+            return false;
+        }
     }
 
     @Override
     public boolean delete(Integer id) {
-        return dao.delete(id);
+        try {
+            return dao.delete(id);
+        } catch (SQLException e) {
+            LOGGER.severe(e.getMessage());
+            return false;
+        }
     }
 
     @Override
     public List<Employee> findAll() {
-        return dao.findAll();
+        try {
+            return dao.findAll();
+        } catch (SQLException e) {
+            LOGGER.severe(e.getMessage());
+            return new ArrayList<>();
+        }
     }
-
-    private final EmployeeDao dao = EmployeeDaoImpl.getInstance();
-    private static volatile EmployeeService INSTANCE;
 }

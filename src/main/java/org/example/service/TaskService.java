@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TaskService {
-    Optional<Task> create(Task task);
+    Task create(Task task);
 
     Optional<Task> read(Integer id);
 
