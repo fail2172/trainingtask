@@ -1,8 +1,8 @@
-package org.example.dao.hibernate;
+package org.example.dao;
 
-import org.example.dao.TaskDao;
 import org.example.model.Employee;
 import org.example.model.Project;
+import org.example.model.Task;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -27,7 +27,7 @@ public class HibernateConnectionFactory {
         Configuration configuration = new Configuration().configure();
         configuration.addAnnotatedClass(Project.class);
         configuration.addAnnotatedClass(Employee.class);
-        configuration.addAnnotatedClass(TaskDao.class);
+        configuration.addAnnotatedClass(Task.class);
         StandardServiceRegistryBuilder builder = new StandardServiceRegistryBuilder().applySettings(configuration.getProperties());
         this.sessionFactory = configuration.buildSessionFactory(builder.build());
     }
