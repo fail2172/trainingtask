@@ -1,80 +1,57 @@
 package org.example.service;
 
 import org.example.dao.TaskDao;
-import org.example.dao.TaskDaoImpl;
+import org.example.exception.BadRequestException;
 import org.example.model.Task;
+import org.example.model.dto.TaskDto;
+import org.example.model.dto.TaskMapper;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
 public class TaskServiceImpl implements TaskService {
     private final static Logger LOGGER = Logger.getLogger(TaskServiceImpl.class.getName());
-    private final static TaskDao taskDao = TaskDaoImpl.getInstance();
-    private static volatile TaskService INSTANCE;
+    private final EmployeeService employeeService;
+    private final ProjectService projectService;
+    private final TaskDao dao;
 
-    private TaskServiceImpl() {
-    }
-
-    public static TaskService getInstance() {
-        if (INSTANCE == null) {
-            synchronized (TaskServiceImpl.class) {
-                if (INSTANCE == null)
-                    return INSTANCE = new TaskServiceImpl();
-            }
-        }
-        return INSTANCE;
+    public TaskServiceImpl(EmployeeService employeeService, ProjectService projectService, TaskDao dao) {
+        this.employeeService = employeeService;
+        this.projectService = projectService;
+        this.dao = dao;
     }
 
     @Override
     public Task create(Task task) {
-        try {
-            return taskDao.create(task);
-        } catch (Exception e) {
-            LOGGER.severe(e.getMessage());
-            return new Task();
-        }
+        return dao.create(task);
+    }
+
+    @Override
+    public Task create(TaskDto taskDto) throws BadRequestException {
+        Task task = TaskMapper.toModel(taskDto);
+        task.setEmployee(employeeService.read(taskDto.getEmployeeId()).orElseThrow(BadRequestException::new));
+        task.setProject(projectService.read(taskDto.getProjectId()).orElseThrow(BadRequestException::new));
+        return dao.create(task);
     }
 
     @Override
     public Optional<Task> read(Integer id) {
-        try {
-            return taskDao.read(id);
-        } catch (Exception e) {
-            LOGGER.severe(e.getMessage());
-            return Optional.empty();
-        }
+        return dao.read(id);
     }
 
     @Override
     public boolean update(Task task) {
-        try {
-            return taskDao.update(task);
-        } catch (Exception e) {
-            LOGGER.severe(e.getMessage());
-            return false;
-        }
+        return dao.update(task);
     }
 
     @Override
     public boolean delete(Integer id) {
-        try {
-            return taskDao.delete(id);
-        } catch (Exception e) {
-            LOGGER.severe(e.getMessage());
-            return false;
-        }
+        return dao.delete(id);
     }
 
     @Override
     public List<Task> findAll() {
-        try {
-            return taskDao.findAll();
-        } catch (Exception e) {
-            LOGGER.severe(e.getMessage());
-            return new ArrayList<>();
-        }
+        return dao.findAll();
     }
 }

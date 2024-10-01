@@ -1,9 +1,6 @@
 package org.example.model.dto;
 
 import org.example.model.Task;
-import org.example.model.TaskStatus;
-
-import java.time.LocalDate;
 
 public class TaskMapper {
     public static Task toModel(TaskDto dto) {
@@ -14,17 +11,5 @@ public class TaskMapper {
                 dto.getStart(),
                 dto.getFinish(),
                 dto.getEstimate());
-    }
-
-    public static TaskDto toDto(Task model) {
-        return new TaskDto(
-                model.getId(),
-                model.getName(),
-                model.getStatus(),
-                model.getStart(),
-                model.getFinish(),
-                model.getEstimate(),
-                model.getProject().getId(),
-                model.getEmployee().getId());
     }
 }

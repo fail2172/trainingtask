@@ -1,5 +1,8 @@
 package org.example.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.Objects;
@@ -16,8 +19,10 @@ public class Task {
     @Column(name = "status")
     private TaskStatus status;
     @Column(name = "start")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-YYYY", timezone = "UTC")
     private LocalDate start;
     @Column(name = "finish")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-YYYY", timezone = "UTC")
     private LocalDate finish;
     @Column(name = "estimate")
     private Integer estimate;

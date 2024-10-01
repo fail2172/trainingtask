@@ -9,20 +9,10 @@ import java.util.List;
 import java.util.Optional;
 
 public class EmployeeDaoImpl implements EmployeeDao {
-    private static volatile EmployeeDao INSTANCE;
-    private final static HibernateConnectionFactory connectionFactory = HibernateConnectionFactory.getInstance();
+    private final ConnectionFactory connectionFactory;
 
-    private EmployeeDaoImpl() {
-    }
-
-    public static EmployeeDao getInstance() {
-        if (INSTANCE == null) {
-            synchronized (EmployeeDaoImpl.class) {
-                if (INSTANCE == null)
-                    return INSTANCE = new EmployeeDaoImpl();
-            }
-        }
-        return INSTANCE;
+    public EmployeeDaoImpl(ConnectionFactory connectionFactory) {
+        this.connectionFactory = connectionFactory;
     }
 
     @Override

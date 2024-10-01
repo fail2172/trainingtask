@@ -9,21 +9,10 @@ import java.util.List;
 import java.util.Optional;
 
 public class ProjectDaoImpl implements ProjectDao {
-    private static volatile org.example.dao.ProjectDao INSTANCE;
-    private final static HibernateConnectionFactory connectionFactory = HibernateConnectionFactory.getInstance();
+    private final ConnectionFactory connectionFactory;
 
-
-    public static ProjectDao getInstance() {
-        if (INSTANCE == null) {
-            synchronized (HibernateConnectionFactory.class) {
-                if (INSTANCE == null)
-                    return INSTANCE = new ProjectDaoImpl();
-            }
-        }
-        return INSTANCE;
-    }
-
-    private ProjectDaoImpl() {
+    public ProjectDaoImpl(ConnectionFactory connectionFactory) {
+        this.connectionFactory = connectionFactory;
     }
 
     @Override

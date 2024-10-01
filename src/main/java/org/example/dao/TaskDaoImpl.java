@@ -9,20 +9,10 @@ import java.util.List;
 import java.util.Optional;
 
 public class TaskDaoImpl implements TaskDao {
-    private static volatile TaskDao INSTANCE;
-    private final static HibernateConnectionFactory connectionFactory = HibernateConnectionFactory.getInstance();
+    private final ConnectionFactory connectionFactory;
 
-    private TaskDaoImpl() {
-    }
-
-    public static TaskDao getInstance() {
-        if (INSTANCE == null) {
-            synchronized (TaskDaoImpl.class) {
-                if (INSTANCE == null)
-                    return INSTANCE = new TaskDaoImpl();
-            }
-        }
-        return INSTANCE;
+    public TaskDaoImpl(ConnectionFactory connectionFactory) {
+        this.connectionFactory = connectionFactory;
     }
 
     @Override
